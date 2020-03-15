@@ -42,39 +42,42 @@ def get_word_definition_en(each_word, definition_html):
     out, err = p.communicate()
     root = lxml.html.fromstring(out)
 
-    entry_ele = root.xpath(".//entry[@class='entry']")[0]
-    for each_ele in entry_ele.getchildren():
-        # handle ipa
-        if "hg" in each_ele.attrib.get("class"):
-            try:
-                ipa_ele = each_ele.xpath(".//span[@class='prx']")[0]
-                ipa_text = "".join(ipa_ele.itertext()).strip()
-                definition_html += "<div class=ipa style='text-align:left'> {} </div>".format(ipa_text)
-            except:
-                pass
-        # handle definition
-        elif "sg" in each_ele.attrib.get("class"):
-            sg_ele_list = each_ele.getchildren()
-            for each_sg_ele in sg_ele_list:
-                if "se" not in each_sg_ele.attrib.get("class"):
-                    continue
-                else:
-                    se_ele_list = each_sg_ele.getchildren()
-                    for each_se_ele in se_ele_list:
-                        if "posg" in each_se_ele.attrib.get("class") or "x_xdh" in each_se_ele.attrib.get("class"):
-                            se_name = "".join(each_se_ele.itertext())
-                            definition_html += "<h5 style='text-align:left'> {} </h5>".format(se_name)
-                        else:
-                            se_text = "".join(each_se_ele.itertext())
-                            se_text = se_text.replace("•", "<br>  •").strip()
-                            definition_html += "<p style='text-align:left'> {} </p>".format(se_text)
-        else:
-            other_ele_list = each_ele.getchildren()
-            other_ele_name = other_ele_list[0].text
-            other_ele_text = "".join(each_ele.itertext())
-            definition_html += "<h4 style='text-align:left'> {} </h4>".format(other_ele_name)
-            definition_html += "<hr />"
-            definition_html += "<p style='text-align:left'> {} </p>".format(other_ele_text)
+    entry_ele_list = root.xpath(".//entry[@class='entry']")
+    for entry_ele in entry_ele_list:
+        entry_name = entry_ele.attrib.get("d:title")
+        definition_html += "<h5 style='text-align:left'> {} </h5>".format(entry_name)
+        for each_ele in entry_ele.getchildren():
+            # handle ipa
+            if "hg" in each_ele.attrib.get("class"):
+                try:
+                    ipa_ele = each_ele.xpath(".//span[@class='prx']")[0]
+                    ipa_text = "".join(ipa_ele.itertext()).strip()
+                    definition_html += "<div class=ipa style='text-align:left'> {} </div>".format(ipa_text)
+                except:
+                    pass
+            # handle definition
+            elif "sg" in each_ele.attrib.get("class"):
+                sg_ele_list = each_ele.getchildren()
+                for each_sg_ele in sg_ele_list:
+                    if "se" not in each_sg_ele.attrib.get("class"):
+                        continue
+                    else:
+                        se_ele_list = each_sg_ele.getchildren()
+                        for each_se_ele in se_ele_list:
+                            if "posg" in each_se_ele.attrib.get("class") or "x_xdh" in each_se_ele.attrib.get("class"):
+                                se_name = "".join(each_se_ele.itertext())
+                                definition_html += "<h5 style='text-align:left'> {} </h5>".format(se_name)
+                            else:
+                                se_text = "".join(each_se_ele.itertext())
+                                se_text = se_text.replace("•", "<br>  •").strip()
+                                definition_html += "<p style='text-align:left'> {} </p>".format(se_text)
+            else:
+                other_ele_list = each_ele.getchildren()
+                other_ele_name = other_ele_list[0].text
+                other_ele_text = "".join(each_ele.itertext())
+                definition_html += "<h4 style='text-align:left'> {} </h4>".format(other_ele_name)
+                definition_html += "<hr />"
+                definition_html += "<p style='text-align:left'> {} </p>".format(other_ele_text)
 
     return definition_html
 
@@ -87,22 +90,25 @@ def get_word_definition_zh(each_word, definition_html):
     root = lxml.html.fromstring(out)
 
     try:
-        entry_ele = root.xpath(".//entry[@class='entry']")[0]
+        entry_ele_list = root.xpath(".//entry[@class='entry']")
         definition_html += "<h3 style='text-align:left'> Chinese</h3> <hr />"
-        for each_ele in entry_ele.getchildren():
-            # handle chinese definition
-            if "gramb" in each_ele.attrib.get("class"):
-                sg_ele_list = each_ele.getchildren()
-                for each_sg_ele in sg_ele_list:
-                    if "posg" in each_sg_ele.attrib.get("class") or "x_xdh" in each_sg_ele.attrib.get("class"):
-                        sg_name = "".join(each_sg_ele.itertext())
-                        definition_html += "<h5 style='text-align:left'> {} </h5>".format(sg_name)
-                    else:
-                        se_ele_list = each_sg_ele.getchildren()
-                        for each_se_ele in se_ele_list:
-                            se_text = "".join(each_se_ele.itertext())
-                            se_text = se_text.replace("•", "<br>  •").strip()
-                            definition_html += "<p style='text-align:left'> {} </p>".format(se_text)
+        for entry_ele in entry_ele_list:
+            entry_name = entry_ele.attrib.get("d:title")
+            definition_html += "<h5 style='text-align:left'> {} </h5>".format(entry_name)
+            for each_ele in entry_ele.getchildren():
+                # handle chinese definition
+                if "gramb" in each_ele.attrib.get("class"):
+                    sg_ele_list = each_ele.getchildren()
+                    for each_sg_ele in sg_ele_list:
+                        if "posg" in each_sg_ele.attrib.get("class") or "x_xdh" in each_sg_ele.attrib.get("class"):
+                            sg_name = "".join(each_sg_ele.itertext())
+                            definition_html += "<h5 style='text-align:left'> {} </h5>".format(sg_name)
+                        else:
+                            se_ele_list = each_sg_ele.getchildren()
+                            for each_se_ele in se_ele_list:
+                                se_text = "".join(each_se_ele.itertext())
+                                se_text = se_text.replace("•", "<br>  •").strip()
+                                definition_html += "<p style='text-align:left'> {} </p>".format(se_text)
     except Exception as e:
         logging.warning("Skipped to fill chinese context due to {} ".format(str(e)))
 
@@ -118,9 +124,6 @@ def build_card_html(word):
 
     definition_html = get_word_definition_zh(word, definition_html)
     definition_html += "</body></html>"
-
-    my_note = anki_deck.create_note(my_model, word, definition_html)
-    my_deck.add_note(my_note)
 
     return definition_html
 
@@ -151,7 +154,7 @@ def main():
 if __name__ == "__main__":
     main()
     # load_words()
-    # search_word = "use"
+    # search_word = "tote"
     # build_card_html(search_word)
     # anki_deck.package_deck(my_deck)
     # get_word_definition_zh(search_word)

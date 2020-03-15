@@ -7,17 +7,11 @@
 @desc:
 """
 
-import sys
+import subprocess
 import json
 import logging
 
-import nltk
-from nltk.corpus import stopwords
-from nltk.stem.porter import PorterStemmer
-from nltk.stem.wordnet import WordNetLemmatizer
-
-sys.path.append("../")
-from stat_words import dictionary
+import lxml.html
 
 
 # create logging
@@ -26,37 +20,23 @@ logging.basicConfig(
     format="%(asctime)s:%(levelname)s:%(message)s")
 
 
-def parse_original_word(k):
-    real_original_word = ""
-
-    stop_words = set(stopwords.words("english"))
-    lem = WordNetLemmatizer()
-    stem = PorterStemmer()
-
-    if k in stop_words:
-        return real_original_word
-
-    if "—" in k:
-        return real_original_word
-
+def get_original_word(each_word):
+    p = subprocess.Popen(['./dicttool', '-e', each_word],
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
+    out, err = p.communicate()
     original_word = ""
+
     try:
-        original_word, explation = dictionary.search_new(k)
+        root = lxml.html.fromstring(out)
+        entry_ele_list = root.xpath(".//entry[@class='entry']")
+        for entry_ele in entry_ele_list:
+            original_word = entry_ele.attrib.get("d:title")
+            return original_word
     except Exception as e:
-        logging.error("Failed to look up word {} due to {}".format(k, str(e)))
+        logging.error("Failed to parse original word of {} due to {} ".format(each_word, str(e)))
 
-    if original_word:
-        stem_word = stem.stem(k)
-        lem_word = lem.lemmatize(k, pos='v')
-        dis = nltk.edit_distance(k, original_word)
-        sim = 1 - dis / len(k)
-        # print(k, original_word, sim, stem_word, lem_word)
-        if sim > 0.4 or original_word == stem_word or original_word == lem_word:
-            real_original_word = original_word
-        else:
-            logging.info("Skipped to set original word for {}. original word : {}".format(k, original_word))
-
-    return real_original_word.replace("[32m", "")
+    return original_word
 
 
 def restat_word_using_dictionary():
@@ -67,11 +47,8 @@ def restat_word_using_dictionary():
     new_stat_data = dict()
 
     for k in a1_sorted_keys:
-        real_original_word = parse_original_word(k)
+        real_original_word = get_original_word(k)
         if not real_original_word:
-            continue
-        if "," in real_original_word or "/" in real_original_word or "'" in real_original_word or \
-                "." in real_original_word:
             continue
 
         if real_original_word not in new_stat_data:
@@ -89,3 +66,4 @@ def restat_word_using_dictionary():
 if __name__ == "__main__":
     restat_word_using_dictionary()
     # print(parse_original_word("took"))
+    # print(get_original_word("fresher"))
